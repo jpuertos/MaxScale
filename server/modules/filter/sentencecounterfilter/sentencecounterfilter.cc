@@ -16,6 +16,8 @@
 
 #include "sentencecounterfilter.hh"
 
+#include <sstream>
+
 // This declares a module in MaxScale
 extern "C" MXS_MODULE* MXS_CREATE_MODULE()
 {
@@ -35,7 +37,7 @@ extern "C" MXS_MODULE* MXS_CREATE_MODULE()
         {
             {"logfile",          MXS_MODULE_PARAM_STRING, "/var/log/sentencecount.txt"},
             {"seconds",          MXS_MODULE_PARAM_COUNT, "42"},
-            {"collectivelly",    MXS_MODULE_PARAM_BOOL, "true"},
+            {"collectivelly",    MXS_MODULE_PARAM_BOOL, "false"},
             {MXS_END_MODULE_PARAMS}
         }
     };
@@ -43,8 +45,15 @@ extern "C" MXS_MODULE* MXS_CREATE_MODULE()
     return &info;
 }
 
-SentenceCounterFilter::SentenceCounterFilter()
+SentenceCounterFilter::SentenceCounterFilter(std::string logfile, unsigned long seconds, bool collectivelly) :
+    m_logfile(logfile), m_seconds(seconds), m_collectivelly(collectivelly)
 {
+    std::stringstream message;
+    message << "Sentence counter filter created: Log file: " << m_logfile
+            << ", Seconds: " << m_seconds
+            << ", Collectivelly: " << m_collectivelly;
+
+    MXS_NOTICE("%s", message.str().c_str());
 }
 
 SentenceCounterFilter::~SentenceCounterFilter()
@@ -53,7 +62,13 @@ SentenceCounterFilter::~SentenceCounterFilter()
 
 SentenceCounterFilter* SentenceCounterFilter::create(const char* zName, MXS_CONFIG_PARAMETER* ppParams)
 {
-    return new SentenceCounterFilter();
+    SentenceCounterFilter* pFilter = nullptr;
+    // TODO: Get the params into vars that we can pass to the constructor
+    auto logfile = config_get_string(ppParams, "logfile");
+    auto seconds = config_get_size(ppParams, "seconds");
+    auto collectivelly = config_get_bool(ppParams, "collectivelly");
+
+    return new SentenceCounterFilter(logfile, seconds, collectivelly);
 }
 
 

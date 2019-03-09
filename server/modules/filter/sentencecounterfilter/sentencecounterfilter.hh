@@ -36,5 +36,9 @@ public:
     uint64_t getCapabilities();
 
 private:
-    SentenceCounterFilter();
+    SentenceCounterFilter(std::string logfile, unsigned long seconds, bool collectivelly);
+
+    std::string m_logfile;
+    unsigned long m_seconds = 0;
+    bool m_collectivelly = false;
 };
