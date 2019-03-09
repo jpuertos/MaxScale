@@ -16,6 +16,8 @@
 #include <maxscale/filter.hh>
 #include "sentencecountersession.hh"
 
+#include <unordered_map>
+
 class SentenceCounterFilter : public maxscale::Filter<SentenceCounterFilter, SentenceCounterSession>
 {
     SentenceCounterFilter(const SentenceCounterFilter&);
@@ -41,4 +43,5 @@ private:
     std::string m_logfile;
     unsigned long m_seconds = 0;
     bool m_collectivelly = false;
+    std::unordered_map<qc_query_op_t, unsigned long> m_counter;
 };
