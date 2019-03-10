@@ -16,6 +16,7 @@
 
 #include "sentencecounterfilter.hh"
 
+#include <fstream>
 #include <sstream>
 
 // This declares a module in MaxScale
@@ -105,10 +106,30 @@ void SentenceCounterFilter::increment(qc_query_op_t operation)
     m_counter[operation]++;
 }
 
+
 void SentenceCounterFilter::save()
 {
-    std::lock_guard<std::mutex> lock(m_counters_mutex); // Not incrementing while saving
-    // TODO: implement the saving
+    std::lock_guard<std::mutex> lock(m_counters_mutex);
+
+    std::ofstream file(m_logfile);
+    if (file.is_open())
+    {
+        auto now = std::chrono::system_clock::now();
+        auto now_time = std::chrono::system_clock::to_time_t(now);
+        auto last_time = std::chrono::system_clock::to_time_t(m_last_saving_time);
+
+        file << "\"" << std::ctime(&now_time) << "\" \"" << std::ctime(&last_time) << "\",";
+        for (auto & c : m_counter) // TODO, there is no order... how to know what column is what
+        {
+            file << c.second << ",";
+        }
+        file <<"\b\n"; // Replace last coma with newline
+    }
+    else
+    {
+        // TODO: Error, unable to open file
+    }
+    m_last_saving_time = std::chrono::system_clock::now();
     m_counter.clear();
 }
 
