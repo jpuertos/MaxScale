@@ -124,6 +124,7 @@ void SentenceCounterFilter::save()
             file << c.second << ",";
         }
         file <<"\b\n"; // Replace last coma with newline
+        file.flush();
     }
     else
     {
