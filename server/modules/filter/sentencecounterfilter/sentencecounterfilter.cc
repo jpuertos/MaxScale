@@ -46,24 +46,27 @@ extern "C" MXS_MODULE* MXS_CREATE_MODULE()
 }
 
 SentenceCounterFilter::SentenceCounterFilter(std::string logfile, unsigned long seconds, bool collectivelly) :
-    m_logfile(logfile), m_seconds(seconds), m_collectivelly(collectivelly)
+    m_logfile(logfile), m_time_window(seconds), m_collectivelly(collectivelly), m_counter()
 {
     std::stringstream message;
     message << "Sentence counter filter created: Log file: " << m_logfile
-            << ", Seconds: " << m_seconds
+            << ", Seconds: " << seconds
             << ", Collectivelly: " << m_collectivelly;
 
+    m_task = std::thread{&SentenceCounterFilter::logger_task, this}; // Using move semantics to start the logger thread
     MXS_NOTICE("%s", message.str().c_str());
 }
 
 SentenceCounterFilter::~SentenceCounterFilter()
 {
+    std::lock_guard<std::mutex> lock(m_counters_mutex); // Need to wait if saving operation is ongoin and prevent starting a new one
+    m_stop = true;
+    m_stop_cv.notify_one(); // We notify the logger thread that we are finishing up
+    m_task.join(); // And we wait for logger thread to finish its job
 }
 
 SentenceCounterFilter* SentenceCounterFilter::create(const char* zName, MXS_CONFIG_PARAMETER* ppParams)
 {
-    SentenceCounterFilter* pFilter = nullptr;
-    // TODO: Get the params into vars that we can pass to the constructor
     auto logfile = config_get_string(ppParams, "logfile");
     auto seconds = config_get_size(ppParams, "seconds");
     auto collectivelly = config_get_bool(ppParams, "collectivelly");
@@ -92,4 +95,40 @@ json_t* SentenceCounterFilter::diagnostics_json() const
 uint64_t SentenceCounterFilter::getCapabilities()
 {
     return RCAP_TYPE_NONE;
+}
+
+void SentenceCounterFilter::increment(qc_query_op_t operation)
+{
+    std::lock_guard<std::mutex> lock(m_counters_mutex); // No saving while we increment
+
+    // TODO: Check if is one of the ones we want to log SELECT, INSERT, DELETE, UPDATE
+    m_counter[operation]++;
+}
+
+void SentenceCounterFilter::save()
+{
+    std::lock_guard<std::mutex> lock(m_counters_mutex); // Not incrementing while saving
+    // TODO: implement the saving
+    m_counter.clear();
+}
+
+/*
+ * We need to wait either for the time to expire in which case we would save()
+ * or for the condition variable 'stop' (object being destructed) become true
+ */
+void SentenceCounterFilter::logger_task()
+{
+    while (true)
+    {
+        std::unique_lock<std::mutex> lock(m_stop_mutex);
+        if(m_stop_cv.wait_for(lock, m_time_window, [this](){return m_stop == true;}))
+        {
+            return;
+        }
+        else // Period expired
+        {
+            save();
+        }
+
+    }
 }

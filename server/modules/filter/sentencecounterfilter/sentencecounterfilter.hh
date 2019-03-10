@@ -14,8 +14,13 @@
 
 #include <maxscale/ccdefs.hh>
 #include <maxscale/filter.hh>
+#include <maxbase/stopwatch.hh>
 #include "sentencecountersession.hh"
 
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 #include <unordered_map>
 
 class SentenceCounterFilter : public maxscale::Filter<SentenceCounterFilter, SentenceCounterSession>
@@ -26,22 +31,28 @@ class SentenceCounterFilter : public maxscale::Filter<SentenceCounterFilter, Sen
 public:
     ~SentenceCounterFilter();
 
-    // Creates a new filter instance
     static SentenceCounterFilter* create(const char* zName, MXS_CONFIG_PARAMETER* ppParams);
-
-    // Creates a new session for this filter
     SentenceCounterSession* newSession(MXS_SESSION* pSession);
-
     void    diagnostics(DCB* pDcb);
     json_t* diagnostics_json() const;
-
     uint64_t getCapabilities();
+
+    void increment(qc_query_op_t operation);
+    void save();
 
 private:
     SentenceCounterFilter(std::string logfile, unsigned long seconds, bool collectivelly);
+    void logger_task(); // Waits for the time window and then writes into logfile
+
 
     std::string m_logfile;
-    unsigned long m_seconds = 0;
+    std::chrono::seconds m_time_window;
     bool m_collectivelly = false;
     std::unordered_map<qc_query_op_t, unsigned long> m_counter;
+
+    std::thread m_task;
+    std::mutex m_counters_mutex;
+    std::condition_variable m_stop_cv;
+    std::mutex m_stop_mutex; // To signal that launcher thread is destroying this object
+    bool m_stop = false;
 };

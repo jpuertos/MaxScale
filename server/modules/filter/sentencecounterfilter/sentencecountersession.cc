@@ -33,7 +33,7 @@ SentenceCounterSession* SentenceCounterSession::create(MXS_SESSION* pSession, co
 
 void SentenceCounterSession::close()
 {
-    // TODO: Write the counters into te log file?
+    // TODO: Write the counters into the log file?
 }
 
 int SentenceCounterSession::routeQuery(GWBUF* pPacket)
