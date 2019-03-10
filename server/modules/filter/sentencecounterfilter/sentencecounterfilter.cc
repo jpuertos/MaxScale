@@ -124,15 +124,15 @@ void SentenceCounterFilter::save()
             file << c.second << ",";
         }
         file <<"\b\n"; // Replace last coma with newline
+
         m_last_saving_time = now;
+        m_counter.clear();
+        file.close();
     }
     else
     {
         // TODO: Error, unable to open file
     }
-
-    m_counter.clear();
-    file.close();
 }
 
 /*
