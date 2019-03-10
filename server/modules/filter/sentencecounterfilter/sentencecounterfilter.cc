@@ -124,12 +124,13 @@ void SentenceCounterFilter::save()
             file << c.second << ",";
         }
         file <<"\b\n"; // Replace last coma with newline
+        m_last_saving_time = now;
     }
     else
     {
         // TODO: Error, unable to open file
     }
-    m_last_saving_time = std::chrono::system_clock::now();
+
     m_counter.clear();
     file.close();
 }
