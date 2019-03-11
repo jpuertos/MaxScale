@@ -14,7 +14,7 @@
 // All log messages from this module are prefixed with this
 #define MXS_MODULE_NAME "operationcounterfiler"
 
-#include "sentencecounterfilter.hh"
+#include "operationcounterfilter.hh"
 
 #include <fstream>
 #include <sstream>
@@ -27,7 +27,7 @@ extern "C" MXS_MODULE* MXS_CREATE_MODULE()
         MXS_MODULE_API_FILTER,
         MXS_MODULE_IN_DEVELOPMENT,
         MXS_FILTER_VERSION,
-        "Counts the number of times a sentence is used in a given window time",
+        "Counts the number of times an operation is used in a given window time",
         "V1.0.0",
         RCAP_TYPE_NONE,
         &maxscale::OperationCounterFilter::s_object,               // This is defined in the MaxScale filter template
@@ -36,7 +36,7 @@ extern "C" MXS_MODULE* MXS_CREATE_MODULE()
         NULL,                                   /* Thread init. */
         NULL,                                   /* Thread finish. */
         {
-            {"logfile",          MXS_MODULE_PARAM_STRING, "/var/log/sentencecount.txt"},
+            {"logfile",          MXS_MODULE_PARAM_STRING, "/var/log/operationcount.txt"},
             {"seconds",          MXS_MODULE_PARAM_COUNT, "42"},
             {"collectivelly",    MXS_MODULE_PARAM_BOOL, "false"},
             {MXS_END_MODULE_PARAMS}

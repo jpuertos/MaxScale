@@ -15,7 +15,7 @@
 #include <maxscale/ccdefs.hh>
 #include <maxscale/filter.hh>
 #include <maxbase/stopwatch.hh>
-#include "sentencecountersession.hh"
+#include "operationcountersession.hh"
 
 #include <chrono>
 #include <condition_variable>

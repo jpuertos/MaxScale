@@ -13,8 +13,8 @@
 
 #define MXS_MODULE_NAME "operationcountersession"
 
-#include "sentencecountersession.hh"
-#include "sentencecounterfilter.hh"
+#include "operationcountersession.hh"
+#include "operationcounterfilter.hh"
 
 namespace maxscale
 {
