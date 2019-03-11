@@ -15,22 +15,31 @@
 #include <maxscale/ccdefs.hh>
 #include <maxscale/filter.hh>
 
-class SentenceCounterFilter;
-
-class SentenceCounterSession : public maxscale::FilterSession
+namespace maxscale
 {
-    SentenceCounterSession(const SentenceCounterSession&);
-    SentenceCounterSession& operator=(const SentenceCounterSession&);
+
+class OperationCounterFilter;
+
+class OperationCounterSession : public maxscale::FilterSession
+{
+    OperationCounterSession(const OperationCounterSession&);
+    OperationCounterSession& operator=(const OperationCounterSession&);
 
 public:
-    ~SentenceCounterSession();
+    virtual ~OperationCounterSession();
 
     void close();
 
-    static SentenceCounterSession* create(MXS_SESSION* pSession, const SentenceCounterFilter* p);
+    static OperationCounterSession* create(MXS_SESSION* pSession, const OperationCounterFilter* p);
 
     int routeQuery(GWBUF* pPacket);
 
+    virtual bool lock_to_master() { return true; } // TODO
+    virtual bool is_locked_to_master() const { return true; } // TODO
+    virtual bool supports_hint(HINT_TYPE hint_type) const { return false; } // TODO
+
 private:
-    SentenceCounterSession(MXS_SESSION* pSession);
+    OperationCounterSession(MXS_SESSION* pSession);
 };
+
+} // maxscale

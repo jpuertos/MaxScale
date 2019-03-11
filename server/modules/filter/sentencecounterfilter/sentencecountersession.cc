@@ -11,32 +11,38 @@
  * Public License.
  */
 
-#define MXS_MODULE_NAME "sentencecounterfilter"
+#define MXS_MODULE_NAME "operationcountersession"
 
 #include "sentencecountersession.hh"
 #include "sentencecounterfilter.hh"
 
-SentenceCounterSession::SentenceCounterSession(MXS_SESSION* pSession)
-    : mxs::FilterSession(pSession)
+namespace maxscale
+{
+
+OperationCounterSession::OperationCounterSession(MXS_SESSION* pSession)
+    : maxscale::FilterSession(pSession)
 {
 }
 
-SentenceCounterSession::~SentenceCounterSession()
+OperationCounterSession::~OperationCounterSession()
 {
 }
 
 // static
-SentenceCounterSession* SentenceCounterSession::create(MXS_SESSION* pSession, const SentenceCounterFilter* pFilter)
+OperationCounterSession* OperationCounterSession::create(MXS_SESSION* pSession, const OperationCounterFilter* pFilter)
 {
-    return new SentenceCounterSession(pSession);
+    return new OperationCounterSession(pSession);
 }
 
-void SentenceCounterSession::close()
+void OperationCounterSession::close()
 {
     // TODO: Write the counters into the log file?
 }
 
-int SentenceCounterSession::routeQuery(GWBUF* pPacket)
+int OperationCounterSession::routeQuery(GWBUF* pPacket)
 {
+    auto op = qc_get_operation(pPacket);
     return mxs::FilterSession::routeQuery(pPacket);
 }
+
+} // maxscale

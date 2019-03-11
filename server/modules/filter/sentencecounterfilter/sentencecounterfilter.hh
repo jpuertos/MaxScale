@@ -23,16 +23,19 @@
 #include <thread>
 #include <unordered_map>
 
-class SentenceCounterFilter : public maxscale::Filter<SentenceCounterFilter, SentenceCounterSession>
+namespace maxscale
 {
-    SentenceCounterFilter(const SentenceCounterFilter&);
-    SentenceCounterFilter& operator=(const SentenceCounterFilter&);
+
+class OperationCounterFilter : public maxscale::Filter<OperationCounterFilter, OperationCounterSession>
+{
+    OperationCounterFilter(const OperationCounterFilter&);
+    OperationCounterFilter& operator=(const OperationCounterFilter&);
 
 public:
-    ~SentenceCounterFilter();
+    ~OperationCounterFilter();
 
-    static SentenceCounterFilter* create(const char* zName, MXS_CONFIG_PARAMETER* ppParams);
-    SentenceCounterSession* newSession(MXS_SESSION* pSession);
+    static OperationCounterFilter* create(const char* zName, MXS_CONFIG_PARAMETER* ppParams);
+    OperationCounterSession* newSession(MXS_SESSION* pSession);
     void    diagnostics(DCB* pDcb);
     json_t* diagnostics_json() const;
     uint64_t getCapabilities();
@@ -41,7 +44,7 @@ public:
     void save();
 
 private:
-    SentenceCounterFilter(std::string logfile, unsigned long seconds, bool collectivelly);
+    OperationCounterFilter(std::string logfile, unsigned long seconds, bool collectivelly);
     void logger_task(); // Waits for the time window and then writes into logfile
 
 
@@ -57,3 +60,5 @@ private:
     std::mutex m_stop_mutex; // To signal that launcher thread is destroying this object
     bool m_stop = false;
 };
+
+} // maxscale

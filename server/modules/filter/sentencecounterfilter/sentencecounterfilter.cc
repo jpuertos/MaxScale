@@ -12,7 +12,7 @@
  */
 
 // All log messages from this module are prefixed with this
-#define MXS_MODULE_NAME "sentencehistogram"
+#define MXS_MODULE_NAME "operationcounterfiler"
 
 #include "sentencecounterfilter.hh"
 
@@ -30,7 +30,7 @@ extern "C" MXS_MODULE* MXS_CREATE_MODULE()
         "Counts the number of times a sentence is used in a given window time",
         "V1.0.0",
         RCAP_TYPE_NONE,
-        &SentenceCounterFilter::s_object,               // This is defined in the MaxScale filter template
+        &maxscale::OperationCounterFilter::s_object,               // This is defined in the MaxScale filter template
         NULL,                                   /* Process init. */
         NULL,                                   /* Process finish. */
         NULL,                                   /* Thread init. */
@@ -46,19 +46,22 @@ extern "C" MXS_MODULE* MXS_CREATE_MODULE()
     return &info;
 }
 
-SentenceCounterFilter::SentenceCounterFilter(std::string logfile, unsigned long seconds, bool collectivelly) :
+namespace maxscale
+{
+
+OperationCounterFilter::OperationCounterFilter(std::string logfile, unsigned long seconds, bool collectivelly) :
     m_logfile(logfile), m_time_window(seconds), m_collectivelly(collectivelly), m_counter()
 {
     std::stringstream message;
-    message << "Sentence counter filter created: Log file: " << m_logfile
+    message << "Operation counter filter created: Log file: " << m_logfile
             << ", Seconds: " << seconds
             << ", Collectivelly: " << m_collectivelly;
 
-    m_task = std::thread{&SentenceCounterFilter::logger_task, this}; // Using move semantics to start the logger thread
+    m_task = std::thread{&OperationCounterFilter::logger_task, this}; // Using move semantics to start the logger thread
     MXS_NOTICE("%s", message.str().c_str());
 }
 
-SentenceCounterFilter::~SentenceCounterFilter()
+OperationCounterFilter::~OperationCounterFilter()
 {
     std::lock_guard<std::mutex> lock(m_counters_mutex); // Need to wait if saving operation is ongoin and prevent starting a new one
     m_stop = true;
@@ -66,39 +69,39 @@ SentenceCounterFilter::~SentenceCounterFilter()
     m_task.join(); // And we wait for logger thread to finish its job
 }
 
-SentenceCounterFilter* SentenceCounterFilter::create(const char* zName, MXS_CONFIG_PARAMETER* ppParams)
+OperationCounterFilter* OperationCounterFilter::create(const char* zName, MXS_CONFIG_PARAMETER* ppParams)
 {
     auto logfile = config_get_string(ppParams, "logfile");
     auto seconds = config_get_size(ppParams, "seconds");
     auto collectivelly = config_get_bool(ppParams, "collectivelly");
 
-    return new SentenceCounterFilter(logfile, seconds, collectivelly);
+    return new OperationCounterFilter(logfile, seconds, collectivelly);
 }
 
 
-SentenceCounterSession* SentenceCounterFilter::newSession(MXS_SESSION* pSession)
+OperationCounterSession* OperationCounterFilter::newSession(MXS_SESSION* pSession)
 {
-    return SentenceCounterSession::create(pSession, this);
+    return OperationCounterSession::create(pSession, this);
 }
 
-void SentenceCounterFilter::diagnostics(DCB* pDcb)
+void OperationCounterFilter::diagnostics(DCB* pDcb)
 {
 
 }
 
 // static
-json_t* SentenceCounterFilter::diagnostics_json() const
+json_t* OperationCounterFilter::diagnostics_json() const
 {
     return NULL;
 }
 
 // static
-uint64_t SentenceCounterFilter::getCapabilities()
+uint64_t OperationCounterFilter::getCapabilities()
 {
     return RCAP_TYPE_NONE;
 }
 
-void SentenceCounterFilter::increment(qc_query_op_t operation)
+void OperationCounterFilter::increment(qc_query_op_t operation)
 {
     std::lock_guard<std::mutex> lock(m_counters_mutex); // No saving while we increment
 
@@ -107,7 +110,7 @@ void SentenceCounterFilter::increment(qc_query_op_t operation)
 }
 
 
-void SentenceCounterFilter::save()
+void OperationCounterFilter::save()
 {
     std::lock_guard<std::mutex> lock(m_counters_mutex);
 
@@ -139,7 +142,7 @@ void SentenceCounterFilter::save()
  * We need to wait either for the time to expire in which case we would save()
  * or for the condition variable 'stop' (object being destructed) become true
  */
-void SentenceCounterFilter::logger_task()
+void OperationCounterFilter::logger_task()
 {
     while (true)
     {
@@ -155,3 +158,5 @@ void SentenceCounterFilter::logger_task()
 
     }
 }
+
+} // maxscale
