@@ -49,13 +49,20 @@ extern "C" MXS_MODULE* MXS_CREATE_MODULE()
 namespace maxscale
 {
 
-OperationCounterFilter::OperationCounterFilter(std::string logfile, unsigned long seconds, bool collectivelly) :
-    m_logfile(logfile), m_time_window(seconds), m_collectivelly(collectivelly), m_counter()
+OperationCounterFilter::OperationCounterFilter(std::string logfile, unsigned long seconds, bool collectivelly,
+    std::vector<qc_query_op_t> ops_counted_for = {QUERY_OP_SELECT, QUERY_OP_INSERT, QUERY_OP_UPDATE, QUERY_OP_DELETE}) :
+    m_logfile(logfile), m_time_window(seconds), m_collectivelly(collectivelly), m_ops_counted_for(ops_counted_for), m_counter()
 {
     std::stringstream message;
     message << "Operation counter filter created: Log file: " << m_logfile
             << ", Seconds: " << seconds
             << ", Collectivelly: " << m_collectivelly;
+
+    // We init counters to zero
+    for (auto op : m_ops_counted_for)
+    {
+        m_counter[op] = 0;
+    }
 
     m_task = std::thread{&OperationCounterFilter::logger_task, this}; // Using move semantics to start the logger thread
     MXS_NOTICE("%s", message.str().c_str());
@@ -122,9 +129,9 @@ void OperationCounterFilter::save()
         auto last_time = std::chrono::system_clock::to_time_t(m_last_saving_time);
 
         file << "\"" << std::ctime(&now_time) << "\" \"" << std::ctime(&last_time) << "\",";
-        for (auto & c : m_counter) // TODO, there is no order... how to know what column is what
+        for (auto & op : m_ops_counted_for)
         {
-            file << c.second << ",";
+            file << m_counter[op] << ",";
         }
         file <<"\b\n"; // Replace last coma with newline
 

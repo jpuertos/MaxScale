@@ -22,6 +22,7 @@
 #include <mutex>
 #include <thread>
 #include <unordered_map>
+#include <vector>
 
 namespace maxscale
 {
@@ -44,13 +45,15 @@ public:
     void save();
 
 private:
-    OperationCounterFilter(std::string logfile, unsigned long seconds, bool collectivelly);
+    OperationCounterFilter(std::string logfile, unsigned long seconds, bool collectivelly,
+        std::vector<qc_query_op_t> ops_counted_for);
     void logger_task(); // Waits for the time window and then writes into logfile
 
 
     std::string m_logfile;
     std::chrono::seconds m_time_window;
     bool m_collectivelly = false;
+    std::vector<qc_query_op_t> m_ops_counted_for;
     std::unordered_map<qc_query_op_t, unsigned long> m_counter;
     std::chrono::time_point<std::chrono::system_clock> m_last_saving_time;
 
