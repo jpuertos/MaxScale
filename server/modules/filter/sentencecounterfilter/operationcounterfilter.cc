@@ -16,6 +16,7 @@
 
 #include "operationcounterfilter.hh"
 
+#include <algorithm> // std::find
 #include <fstream>
 #include <sstream>
 
@@ -70,10 +71,7 @@ OperationCounterFilter::OperationCounterFilter(std::string logfile, unsigned lon
 
 OperationCounterFilter::~OperationCounterFilter()
 {
-    std::lock_guard<std::mutex> lock(m_counters_mutex); // Need to wait if saving operation is ongoin and prevent starting a new one
-    m_stop = true;
-    m_stop_cv.notify_one(); // We notify the logger thread that we are finishing up
-    m_task.join(); // And we wait for logger thread to finish its job
+    stop();
 }
 
 OperationCounterFilter* OperationCounterFilter::create(const char* zName, MXS_CONFIG_PARAMETER* ppParams)
@@ -112,8 +110,11 @@ void OperationCounterFilter::increment(qc_query_op_t operation)
 {
     std::lock_guard<std::mutex> lock(m_counters_mutex); // No saving while we increment
 
-    // TODO: Check if is one of the ones we want to log SELECT, INSERT, DELETE, UPDATE
-    m_counter[operation]++;
+    // This has linear cost, but we need keep an ordered sequence of the operations in a vector
+    if (std::find(m_ops_counted_for.begin(), m_ops_counted_for.end(), operation) != m_ops_counted_for.end())
+    {
+        m_counter[operation]++;
+    }
 }
 
 
@@ -145,6 +146,13 @@ void OperationCounterFilter::save()
     }
 }
 
+void OperationCounterFilter::stop()
+{
+    std::lock_guard<std::mutex> lock(m_counters_mutex); // Need to wait if saving operation is ongoin and prevent starting a new one
+    m_stop = true;
+    m_stop_cv.notify_one(); // We notify the logger thread that we are finishing up
+    m_task.join(); // And we wait for logger thread to finish its job
+}
 /*
  * We need to wait either for the time to expire in which case we would save()
  * or for the condition variable 'stop' (object being destructed) become true

@@ -43,6 +43,7 @@ public:
 
     void increment(qc_query_op_t operation);
     void save();
+    void stop();
 
 private:
     OperationCounterFilter(std::string logfile, unsigned long seconds, bool collectivelly,

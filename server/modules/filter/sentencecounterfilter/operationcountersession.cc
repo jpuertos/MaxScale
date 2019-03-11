@@ -19,8 +19,8 @@
 namespace maxscale
 {
 
-OperationCounterSession::OperationCounterSession(MXS_SESSION* pSession)
-    : maxscale::FilterSession(pSession)
+OperationCounterSession::OperationCounterSession(MXS_SESSION* pSession, OperationCounterFilter* pFilter)
+    : maxscale::FilterSession(pSession), m_filter(*pFilter)
 {
 }
 
@@ -29,19 +29,20 @@ OperationCounterSession::~OperationCounterSession()
 }
 
 // static
-OperationCounterSession* OperationCounterSession::create(MXS_SESSION* pSession, const OperationCounterFilter* pFilter)
+OperationCounterSession* OperationCounterSession::create(MXS_SESSION* pSession, OperationCounterFilter* pFilter)
 {
-    return new OperationCounterSession(pSession);
+    return new OperationCounterSession(pSession, pFilter);
 }
 
 void OperationCounterSession::close()
 {
-    // TODO: Write the counters into the log file?
+    m_filter.stop(); // Stop the logging thread.
 }
 
 int OperationCounterSession::routeQuery(GWBUF* pPacket)
 {
     auto op = qc_get_operation(pPacket);
+    m_filter.increment(op);
     return mxs::FilterSession::routeQuery(pPacket);
 }
 

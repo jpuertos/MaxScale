@@ -30,16 +30,13 @@ public:
 
     void close();
 
-    static OperationCounterSession* create(MXS_SESSION* pSession, const OperationCounterFilter* p);
+    static OperationCounterSession* create(MXS_SESSION* pSession, OperationCounterFilter* p);
 
     int routeQuery(GWBUF* pPacket);
 
-    virtual bool lock_to_master() { return true; } // TODO
-    virtual bool is_locked_to_master() const { return true; } // TODO
-    virtual bool supports_hint(HINT_TYPE hint_type) const { return false; } // TODO
-
 private:
-    OperationCounterSession(MXS_SESSION* pSession);
+    OperationCounterSession(MXS_SESSION* pSession, OperationCounterFilter* pFilter);
+    OperationCounterFilter& m_filter;
 };
 
 } // maxscale
