@@ -30,7 +30,7 @@ extern "C" MXS_MODULE* MXS_CREATE_MODULE()
         MXS_FILTER_VERSION,
         "Counts the number of times an operation is used in a given window time",
         "V1.0.0",
-        RCAP_TYPE_NONE,
+        RCAP_TYPE_STMT_INPUT,
         &maxscale::OperationCounterFilter::s_object,               // This is defined in the MaxScale filter template
         NULL,                                   /* Process init. */
         NULL,                                   /* Process finish. */
