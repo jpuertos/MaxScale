@@ -86,6 +86,7 @@ OperationCounterFilter* OperationCounterFilter::create(const char* zName, MXS_CO
 
 OperationCounterSession* OperationCounterFilter::newSession(MXS_SESSION* pSession)
 {
+    m_ses_id = pSession->ses_id; // Is pSession already valid here at this point?
     return OperationCounterSession::create(pSession, this);
 }
 
@@ -122,7 +123,7 @@ void OperationCounterFilter::save()
 {
     std::lock_guard<std::mutex> lock(m_counters_mutex);
 
-    std::ofstream file(m_logfile);
+    std::ofstream file(m_logfile + std::to_string(m_ses_id));
     if (file.is_open())
     {
         auto now = std::chrono::system_clock::now();

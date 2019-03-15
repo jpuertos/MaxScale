@@ -57,6 +57,7 @@ private:
     std::vector<qc_query_op_t> m_ops_counted_for;
     std::unordered_map<qc_query_op_t, unsigned long> m_counter;
     std::chrono::time_point<std::chrono::system_clock> m_last_saving_time;
+    uint64_t m_ses_id = 0;
 
     std::thread m_task;
     std::mutex m_counters_mutex;
